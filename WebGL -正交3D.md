@@ -1,0 +1,423 @@
+##WebGL -正交3D
+
+这篇文章是一系列关于 WebGL 的文章的一个延续。首先是<a href="webgl-fundamentals.html">基本原理</a>以及前面的<a href="webgl-2d-matrices.html">关于二维矩阵</a>。如果你还没有读过，请先学习前面章节。
+
+在上一篇文章中，我们就学习过二维矩阵是如何进行工作的。我们谈到的平移，旋转，缩放，甚至像素到剪辑空间的投影都可以通过一个矩阵和一些神奇的矩阵数学来完成。做三维只是一个从那里向前的一小步。
+
+在我们以前的二维的例子中，我们有二维点（x，y），我们乘以一个3x3的矩阵。做三维我们需要三维点（x，y，z）和一个 4x4 矩阵。
+
+让我们看最后一个例子，把它改为三维，我们将再次使用一个 F，但这一次的三维 'F'。
+
+我们需要做的第一件事就是改变顶点着色来处理三维，这里是旧的着色。
+
+    <script id="2d-vertex-shader" type="x-shader/x-vertex">
+    attribute vec2 a_position;
+     
+    uniform mat3 u_matrix;
+     
+    void main() {
+      // Multiply the position by the matrix.
+      gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+    }
+    </script>
+
+下面是新的
+
+    <script id="3d-vertex-shader" type="x-shader/x-vertex">
+    attribute vec4 a_position;
+     
+    uniform mat4 u_matrix;
+     
+    void main() {
+      // Multiply the position by the matrix.
+      gl_Position = u_matrix * a_position;
+    }
+    </script>
+
+它甚至更简单！
+
+然后我们需要提供三维数据。
+
+      ...
+     
+      gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+     
+      ...
+     
+    // Fill the buffer with the values that define a letter 'F'.
+    function setGeometry(gl) {
+      gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array([
+              // left column
+                0,   0,  0,
+               30,   0,  0,
+                0, 150,  0,
+                0, 150,  0,
+               30,   0,  0,
+               30, 150,  0,
+     
+              // top rung
+               30,   0,  0,
+              100,   0,  0,
+               30,  30,  0,
+               30,  30,  0,
+              100,   0,  0,
+              100,  30,  0,
+     
+              // middle rung
+               30,  60,  0,
+               67,  60,  0,
+               30,  90,  0,
+               30,  90,  0,
+               67,  60,  0,
+               67,  90,  0]),
+          gl.STATIC_DRAW);
+    }
+
+接下来，我们需要把所有的矩阵函数从二维变到三维
+
+这是 maketranslation，makerotation 和makescale 的二维（前面的）版本
+
+    function makeTranslation(tx, ty) {
+      return [
+        1, 0, 0,
+        0, 1, 0,
+        tx, ty, 1
+      ];
+    }
+     
+    function makeRotation(angleInRadians) {
+      var c = Math.cos(angleInRadians);
+      var s = Math.sin(angleInRadians);
+      return [
+        c,-s, 0,
+        s, c, 0,
+        0, 0, 1
+      ];
+    }
+     
+    function makeScale(sx, sy) {
+      return [
+        sx, 0, 0,
+        0, sy, 0,
+        0, 0, 1
+      ];
+    }
+
+这是更新的三维版本。
+
+    function makeTranslation(tx, ty, tz) {
+      return [
+         1,  0,  0,  0,
+         0,  1,  0,  0,
+         0,  0,  1,  0,
+         tx, ty, tz, 1
+      ];
+    }
+     
+    function makeXRotation(angleInRadians) {
+      var c = Math.cos(angleInRadians);
+      var s = Math.sin(angleInRadians);
+     
+      return [
+        1, 0, 0, 0,
+        0, c, s, 0,
+        0, -s, c, 0,
+        0, 0, 0, 1
+      ];
+    };
+     
+    function makeYRotation(angleInRadians) {
+      var c = Math.cos(angleInRadians);
+      var s = Math.sin(angleInRadians);
+     
+      return [
+        c, 0, -s, 0,
+        0, 1, 0, 0,
+        s, 0, c, 0,
+        0, 0, 0, 1
+      ];
+    };
+     
+    function makeZRotation(angleInRadians) {
+      var c = Math.cos(angleInRadians);
+      var s = Math.sin(angleInRadians);
+      return [
+         c, s, 0, 0,
+        -s, c, 0, 0,
+         0, 0, 1, 0,
+         0, 0, 0, 1,
+      ];
+    }
+     
+    function makeScale(sx, sy, sz) {
+      return [
+        sx, 0,  0,  0,
+        0, sy,  0,  0,
+        0,  0, sz,  0,
+        0,  0,  0,  1,
+      ];
+    }
+
+注意，我们现在有3个旋转函数。在二维中我们只需要一个旋转函数，因为我们只需要绕 Z 轴旋转。现在虽然做三维我们也希望能够绕 X 轴和 Y 轴旋转。你可以从中看出，它们都非常相似。如果我们让它们工作，你会看到它们像以前一样简化
+
+Z 旋转
+
+<p align="center">
+newX = x * c + y * s;
+<p align="center">
+newY = x * -s + y * c;
+
+Y 旋转
+
+<p align="center">
+newX = x * c + z * s;
+<p align="center">
+newZ = x * -s + z * c;
+
+X 旋转
+
+<p align="center">
+newY = y * c + z * s;
+<p align="center">
+newZ = y * -s + z * c;
+
+它给你这些旋转。
+
+
+我们还需要更新投影函数。这是旧的
+
+    function make2DProjection(width, height) {
+      // Note: This matrix flips the Y axis so 0 is at the top.
+      return [
+        2 / width, 0, 0,
+        0, -2 / height, 0,
+        -1, 1, 1
+      ];
+    }
+
+它从像素转换到剪辑空间。作为我们扩展到三维的第一次尝试，让我们试一下
+
+    function make2DProjection(width, height, depth) {
+      // Note: This matrix flips the Y axis so 0 is at the top.
+      return [
+         2 / width, 0, 0, 0,
+         0, -2 / height, 0, 0,
+         0, 0, 2 / depth, 0,
+        -1, 1, 0, 1,
+      ];
+    }
+
+就像我们需要把 X 和 Y 从像素转换到剪辑空间，对于 Z 我们需要做同样的事情。在这种情况下，我们制作 Z 空间像素单元。我会把一些类似 *width* 的值传入 depth ，所以我们的空间宽度为 0 到宽度像素，高为 0 到高度像素，但深度是 -depth / 2 到 +depth / 2。
+
+最后，我们需要更新计算矩阵的代码。
+
+      // Compute the matrices
+      var projectionMatrix =
+          make2DProjection(canvas.clientWidth, canvas.clientHeight, 400);
+      var translationMatrix =
+          makeTranslation(translation[0], translation[1], translation[2]);
+      var rotationXMatrix = makeXRotation(rotation[0]);
+      var rotationYMatrix = makeYRotation(rotation[1]);
+      var rotationZMatrix = makeZRotation(rotation[2]);
+      var scaleMatrix = makeScale(scale[0], scale[1], scale[2]);
+     
+      // Multiply the matrices.
+      var matrix = matrixMultiply(scaleMatrix, rotationZMatrix);
+      matrix = matrixMultiply(matrix, rotationYMatrix);
+      matrix = matrixMultiply(matrix, rotationXMatrix);
+      matrix = matrixMultiply(matrix, translationMatrix);
+      matrix = matrixMultiply(matrix, projectionMatrix);
+     
+      // Set the matrix.
+      gl.uniformMatrix4fv(matrixLocation, false, matrix);
+
+下面是例子。
+
+<p align="center">
+<a class="webgl_center" target="_blank" href="../webgl-3d-step1.html">
+点击这里在一个新窗口中打开
+</a>
+
+我们的第一个问题是几何体是一个平面的 F，这使得很难看到任何 3D。为了解决这个问题让我们将几何体扩展到三维。我们目前的 F 由 3 个矩形组成，每个有2个三角形。为使其成为三维将需要16个矩形。太多了就不列举在这里了。16个矩形，每个有2个三角形，每个三角形有 3 个顶点，一共是96个顶点。如果你想看到所有的视图来源的样本。
+
+我们必须画更多的顶点，因此
+
+        // Draw the geometry.
+        gl.drawArrays(gl.TRIANGLES, 0, 16 * 6);
+
+这是这个版本
+
+<p align="center">
+<a class="webgl_center" target="_blank" href="../webgl-3d-step2.html">
+点击这里在一个新窗口中打开
+</a>
+
+移动滚动条，很难说它是3D的。让我们尝试一种不同的颜色着色每个矩形。要做到这一点，我们将为我们的顶点着色添加另一个属性和 varying 来把它从顶点着色传到到片段着色。
+
+这里是新的顶点着色
+
+    <script id="3d-vertex-shader" type="x-shader/x-vertex">
+    attribute vec4 a_position;
+    attribute vec4 a_color;
+     
+    uniform mat4 u_matrix;
+     
+    varying vec4 v_color;
+     
+    void main() {
+      // Multiply the position by the matrix.
+      gl_Position = u_matrix * a_position;
+     
+      // Pass the color to the fragment shader.
+      v_color = a_color;
+    }
+    </script>
+
+我们需要在片段着色器中使用颜色
+
+    <script id="3d-vertex-shader" type="x-shader/x-fragment">
+    precision mediump float;
+     
+    // Passed in from the vertex shader.
+    varying vec4 v_color;
+     
+    void main() {
+       gl_FragColor = v_color;
+    }
+    </script>
+
+我们需要查找提供颜色的 location，然后设置另一个缓冲和属性给它的颜色。
+
+      ...
+      var colorLocation = gl.getAttribLocation(program, "a_color");
+     
+      ...
+      // Create a buffer for colors.
+      var buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.enableVertexAttribArray(colorLocation);
+     
+      // We'll supply RGB as bytes.
+      gl.vertexAttribPointer(colorLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
+     
+      // Set Colors.
+      setColors(gl);
+     
+      ...
+    // Fill the buffer with colors for the 'F'.
+     
+    function setColors(gl) {
+      gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Uint8Array([
+              // left column front
+            200,  70, 120,
+            200,  70, 120,
+            200,  70, 120,
+            200,  70, 120,
+            200,  70, 120,
+            200,  70, 120,
+     
+              // top rung front
+            200,  70, 120,
+            200,  70, 120,
+            ...
+            ...
+          gl.STATIC_DRAW);
+    }
+
+现在我们得到这个。
+
+<p align="center">
+<a class="webgl_center" target="_blank" href="../webgl-3d-step3.html">
+点击这里在一个新窗口中打开
+</a>
+
+哦，那是什么？好了，它把三维 ‘F’的各个部分，前面，后面，边等等按它们出现在我们的几何体里的顺序画。这并不能给我们带来预期的结果，因为有时在后面的那些要在前面的那些之后画。
+
+ 在 WebGL 中的三角形有前向和后向的概念。一个正向的三角形的顶点以顺时针方向画。后向的三角形的顶点按逆时针方向画。
+
+<p><img src="resources/triangle-winding.svg" class="webgl_center" width="400" /></p>
+
+WebGL也只有向前或向后画三角形的能力。我们可以使用这个功能
+
+      gl.enable(gl.CULL_FACE);
+
+我们只做了一次，就在我们程序的开始。这个功能开启后， WebGL 的默认 “culling” 后向三角形。在这里 “culling” 是 "not drawing" 的意思。
+
+注意到就 WebGL 而言，一个三角形是顺时针或逆时针取决于剪辑空间中该三角形的顶点。换句话说，WebGL 通过你在顶点着色器的顶点上应用的数学函数辨别三角形是前面或后面。这意味着例如在 X 轴按 -1 度量的顺时针三角形成为一个逆时针或顺时针三角形三角形旋转180度成为一个逆时针三角形。因为我们使 CULL_FACE 失去作用，我们就能看到顺时针（前）和逆时针（回）三角形。现在我们打开它，任何时候一个前置三角形因为缩放或旋转或是什么原因左右翻转，WebGL就不会画。这是一件好事，因为当你在三维空间里的时候，你通常想要的是正面面对你的那个三角形。
+
+ CULL_FACE  打开后，这是我们得到的
+
+<p align="center">
+<a class="webgl_center" target="_blank" href="../webgl-3d-step4.html">
+点击这里在一个新窗口中打开
+</a>
+
+嘿！所有的三角形都去哪儿了？事实证明，它们中的许多都面朝着错误的方向。旋转它，当你看向另一边是你会看到他们出现了。幸运的是这很容易解决。我们只看哪一个是朝后的，并且交换2个顶点。例如，如果一个一个朝后的三角形是
+
+               1,   2,   3,
+              40,  50,  60,
+             700, 800, 900,
+
+我们只是翻转最后两个顶点以使它朝前。
+
+               1,   2,   3,
+             700, 800, 900,
+              40,  50,  60,
+
+这样处理所有的后向三角形让我们得到
+
+<p align="center">
+<a class="webgl_center" target="_blank" href="../webgl-3d-step5.html">
+点击这里在一个新窗口中打开
+</a>
+
+这更接近，但仍然有一个问题。甚至所有三角形面对在正确的方向，后向三角形被剔除，我们还有应该在后面的三角形被画在前面三角形应该被画的地方。
+
+进入深度缓冲区。
+
+深度缓冲，有时被称为一个 Z-缓冲，是一个 *depth* 像素的矩形区域，每个彩色像素的深度像素用于形成图像。随着 WebGL 绘制每个彩色像素它还可以画一个深度像素。它做这些都基于我们从顶点着色器返回的 Z 的值。就像我们不得不转换剪辑空间对 X 和 Y，我们在剪辑空间也对 Z 做同样处理或（- 1 至 + 1）。该值，然后转换成一个深度空间值（0 至1）。在 WebGL 绘制一个彩色像素之前它会检查相应的深度像素。如果要画的像素深度值大于相应的深度像素 WebGL 就不画新的彩色像素。否则，它从你的片段着色器绘制颜色的新的彩色像素，并且根据新的深度值绘制深度像素。这意味着，在其他像素后面的像素不会被绘制。
+
+我们可以打开这个功能就像打开 culling 一样简单，用下面语句
+
+      gl.enable(gl.DEPTH_TEST);
+
+我们还需要在我们开始绘画之前清除深度缓冲回到1.0。
+
+      // Draw the scene.
+      function drawScene() {
+        // Clear the canvas AND the depth buffer.
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        ...
+
+现在我们得到
+
+<p align="center">
+<a class="webgl_center" target="_blank" href="../webgl-3d-step6.html">
+点击这里在一个新窗口中打开
+</a>
+
+这是一个 3D!
+
+在下一篇文章我将学习<a href="webgl-3d-perspective.html">如何使它有透视</a>。
+
+###为什么属性 vec4 但 gl.vertexAttribPointer 大小为 3
+
+对于那些注重细节的人们可能已经注意到我们对两个属性的定义
+
+    attribute vec4 a_position;
+    attribute vec4 a_color;
+
+这两个都是 “vec4” 但当我们告诉 WebGL 如何从缓冲获取数据时我们使用
+
+      gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(colorLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
+
+每个函数中的 ‘3’ 的作用只是退出每个属性 3 值。这起作用，是因为在顶点着色器 WebGL 对那些你不提供输入的属性提供默认值。默认值是0，0，0，1，这意味着 x = 0， y = 0， z = 0 和 w = 1。这就是为什么在我们的老 2D 顶点着色器必须显式地提供 1。我们传入 x 和 y，我们必须显式地提供一个 1，因为 z 默认是0。对 3D ，即使我们不提供一个 “w” 它默认为 1 ，这就是我们需要的矩阵数学去做的。
+
+问题？[可以在 stackoverflow 提问](http://stackoverflow.com/questions/tagged/webgl)。
+
+问题/缺陷？[可以在 github 创造一个话题](https://github.com/greggman/webgl-fundamentals/issues)。
