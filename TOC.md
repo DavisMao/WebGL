@@ -1,25 +1,25 @@
-- Fundamentals
-  - [Fundamentals](Fundamentals.md)
-  - [How It Works](How-It-Works.md)
-  - [Shaders and GLSL](Shaders-and-GLSL.md)
+- WebGL 基础
+  - [WebGL 基础](WebGL-Fundamentals.md)
+  - [WebGL 是如何工作的](WebGL-How-It-Works.md)
+  - [WebGL 着色器和 GLSL](WebGL-Shaders-and-GLSL.md)
 - 图像处理
-  - [WebGL 图像处理](图像处理.md)  
-  - [WebGL 图像处理进阶](图像处理进阶.md)
-- 2D translation, rotation, scale, matrix math
-  - [WebGL 2D图像转换](2D图像转换.md)
+  - [WebGL 图像处理](WebGL-Image-Processing.md)  
+  - [WebGL 图像处理延续部分](WebGL-Image-Processing-Continued.md)
+- 2D 转换、旋转、伸缩、矩阵
+  - [WebGL 2D图像转换](图像转换.md)
   - [WebGL 2D图像旋转](2D图像旋转.md)
-  - [WebGL 2D图像Scale](2D-Scale.md)
-  - [WebGL 2DMatrices](2D-Matrices.md)
+  - [WebGL 2D图像Scale](2D图像伸缩.md)
+  - [WebGL 2DMatrices](2D-矩阵.md)
 - 3D
-  - [WebGL - Orthographic 3D](Orthographic-3D.md)
-  - [WebGL 3D Perspective](Perspective.md)
-  - [WebGL 3D - Cameras](Cameras.md)
-- Structure and Organization
-  - [WebGL更少代码，更多乐趣](更少代码，更多乐趣.md)
-  - [WebGL - Drawing Multiple Things](Drawing-Multiple-Things.md)
-  - [WebGL - Scene Graphs](Scene-Graphs.md)
-- Text
+  - [WebGL - 正交3DD](正交3D.md)
+  - [WebGL 3D 透视](3D透视.md)
+  - [WebGL 3D - 摄像机](摄像机.md)
+- 结构与组织
+  - [WebGL - 更少代码，更多乐趣](WebGL更少代码，更多乐趣.md)
+  - [WebGL - 绘制多个东西](Drawing-Multiple-Things.md)
+  - [WebGL - 场景图](Scene-Graphs.md)
+- 文本
   - [WebGL Text - HTML](HTML.md)
   - [WebGL Text - Canvas 2D](Canvas-2D.md)
-  - [WebGL Text - Using a Texture](Using-a-Texture.md)
-  - [WebGL Text - Using a Glyph Texture](Using-a-Glyph-Texture.md)
+  - [WebGL Text - 纹理](Using-a-Texture.md)
+  - [WebGL Text - 使用字符纹理](Using-a-Glyph-Texture.md)
