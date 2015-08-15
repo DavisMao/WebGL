@@ -8,10 +8,10 @@
 - 2D 转换、旋转、伸缩、矩阵
   - [WebGL 2D图像转换](图像转换.md)
   - [WebGL 2D图像旋转](2D图像旋转.md)
-  - [WebGL 2D图像Scale](2D图像伸缩.md)
-  - [WebGL 2DMatrices](2D-矩阵.md)
+  - [WebGL 2D图像伸缩](2D图像伸缩.md)
+  - [WebGL 2D矩阵](2D-矩阵.md)
 - 3D
-  - [WebGL - 正交3DD](正交3D.md)
+  - [WebGL - 3D 正交](正交3D.md)
   - [WebGL 3D 透视](3D透视.md)
   - [WebGL 3D - 摄像机](摄像机.md)
 - 结构与组织
